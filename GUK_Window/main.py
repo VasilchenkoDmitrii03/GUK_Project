@@ -11,7 +11,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from PyQt5.QtWidgets import QSplitter, QLCDNumber, QTextEdit, QSplitter, QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, QMessageBox, \
     QAction, QToolBar, QCheckBox, QStatusBar, QCalendarWidget
-from PyQt5.QtGui import QColor, QIcon
+from PyQt5.QtGui import QColor, QIcon, QPixmap
 from PyQt5.QtCore import Qt
 
 import MyQTWidgets.checkableComboBox
@@ -368,7 +368,7 @@ class MainWindow(QMainWindow):
 
     def create_statistic(self):
         self.statistic_window = StatisticWindow()
-        self.statistic_window.setGeometry(200, 300, 1500, 750)
+        self.statistic_window.setGeometry(200, 300, 500, 600)
         self.statistic_window.show()
 
     def export_csv(self):
@@ -453,18 +453,18 @@ class TableWithStudentsInUnis(QWidget):
         conn.close()
         print(results)
 
-        columns = 4
-        rows = len(results) // columns + 1 if len(results) % columns else 0
+        columns = 3
+        rows = len(results) // columns + (1 if len(results) % columns else 0)
         layout = QVBoxLayout()
 
         self.tableWidget = QTableWidget()
-        self.tableWidget.setRowCount(rows)
+        self.tableWidget.setRowCount(rows if rows else 1)
         self.tableWidget.setColumnCount(columns)  # Только один столбец для QLabel
         print(rows, columns)
 
         # Устанавливаем минимальный и максимальный размеры для ячеек
-        self.tableWidget.horizontalHeader().setDefaultSectionSize(300)
-        self.tableWidget.verticalHeader().setDefaultSectionSize(150)
+        self.tableWidget.horizontalHeader().setDefaultSectionSize(150)
+        self.tableWidget.verticalHeader().setDefaultSectionSize(75)
         self.tableWidget.verticalHeader().setVisible(False)
         self.tableWidget.horizontalHeader().setVisible(False)
 
@@ -480,7 +480,7 @@ class StatisticWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Статистика")
-        split_vertical = QSplitter()
+        # split_vertical = QSplitter()
         split_horizontal = QSplitter(Qt.Vertical)      
         split_horizontal.setSizes([200, 400])
 
@@ -490,12 +490,16 @@ class StatisticWindow(QMainWindow):
         md_area = self.md_table
         ma_area = tmp1.tableWidget
 
+        # widget_with_map = QLabel()
+        # widget_with_map.setPixmap(QPixmap("unnamed.jpg"))
+
         split_horizontal.addWidget(md_area)
         split_horizontal.addWidget(gen_area)
-        split_vertical.addWidget(split_horizontal)
-        split_vertical.addWidget(ma_area)
+        split_horizontal.addWidget(ma_area)
+        # split_vertical.addWidget(split_horizontal)
+        # split_vertical.addWidget(ma_area)
         
-        self.setCentralWidget(split_vertical)        
+        self.setCentralWidget(split_horizontal)        
         self.show()
 
     def military_districts(self):
