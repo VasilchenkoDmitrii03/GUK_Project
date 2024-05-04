@@ -8,7 +8,7 @@ import sqlite3
 
 from PyQt5.QtCore import QSize, QDate
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
+from PyQt5.QtWidgets import QSplitter, QTextEdit, QSplitter, QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, QMessageBox, \
     QAction, QToolBar, QCheckBox, QStatusBar, QCalendarWidget
 from PyQt5.QtGui import QColor, QIcon
@@ -415,12 +415,21 @@ class MainWindow(QMainWindow):
                 item.setBackground(color)
 
 
-class StatisticWindow(QMainWindow):
+class StatisticWindow(QWidget):
     def __init__(self):
         super().__init__()
+        split = QSplitter()
         layout = QVBoxLayout()
-        self.label = QLabel("Another Window")
-        layout.addWidget(self.label)
+
+        md_area = QWidget()
+        gen_area = QWidget()
+        ma_area = QWidget()
+
+        split.addWidget(md_area)
+        split.addWidget(gen_area)
+        split.addWidget(ma_area)
+
+        layout.addWidget(split)
         self.setLayout(layout)
 
 
