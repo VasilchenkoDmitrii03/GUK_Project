@@ -1,4 +1,8 @@
 import sys
+import os
+
+parent_directory = os.path.abspath('..')
+sys.path.append(parent_directory)
 
 import sqlite3
 
@@ -17,6 +21,8 @@ from PyQt5.uic.properties import QtWidgets
 
 
 from StaticResources import TableData
+
+DATABASE_PATH = "GUK_MAIN_DB.db"
 
 
 class EditRowDialog(QDialog):
@@ -171,11 +177,11 @@ class MainWindow(QMainWindow):
 
     #DataBase
     def db(self):
-        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        connection = sqlite3.connect(DATABASE_PATH)
         connection.close()
         self.create_table()
     def create_table(self):
-        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS Students (
@@ -208,7 +214,7 @@ class MainWindow(QMainWindow):
         connection.commit()
         connection.close()
     def sql_request_organizer(self):
-        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
         self.checkable_combobox_list.getChosenValues()
         keys = self.checkable_combobox_list.TotalDict.keys()
@@ -249,7 +255,7 @@ class MainWindow(QMainWindow):
         if not(self.check_record_uniqness(list)):
             return
         try:
-            connection = sqlite3.connect('GUK_MAIN_DB.db')
+            connection = sqlite3.connect(DATABASE_PATH)
             cursor = connection.cursor()
 
             for i in range(len(list)):
@@ -269,7 +275,7 @@ class MainWindow(QMainWindow):
             print("Error occured")
     def check_record_uniqness(self, record:list) -> bool: # if record is unique returns true
         id = str(record[0])
-        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
         cursor.execute(f"SELECT * FROM  Students WHERE ID = {id}")
         tmp = len(cursor.fetchall())
@@ -281,7 +287,7 @@ class MainWindow(QMainWindow):
             return False
         #id = str(record[0])
         #try:
-        #    connection = sqlite3.connect('GUK_MAIN_DB.db')
+        #    connection = sqlite3.connect(DATABASE_PATH)
         #    cursor = connection.cursor()
         #    cursor.execute(f"SELECT * FROM  Students WHERE ID = {id}")
         #    connection.commit()
@@ -293,7 +299,7 @@ class MainWindow(QMainWindow):
         #    return False
 
     def edit_db_row(self, record:list):
-        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
         columns = StaticResources.TableData.getDBColumnsList()
         columnsStr = ','.join(columns)
@@ -367,7 +373,7 @@ class MainWindow(QMainWindow):
 
 
     def get_rows(self, columns:list) -> list:
-        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
         str_columns = ''
         for col in columns:
