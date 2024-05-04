@@ -421,8 +421,9 @@ class StatisticWindow(QMainWindow):
         self.setWindowTitle("Статистика")
         split = QSplitter(Qt.Vertical)        
 
-        md_area = QWidget()
+        self.military_districts()
         gen_area = StatsWidget()
+        md_area = self.md_table
         ma_area = QWidget()
 
         split.addWidget(md_area)
@@ -430,6 +431,35 @@ class StatisticWindow(QMainWindow):
         split.addWidget(ma_area)
         
         self.setCentralWidget(split)        
+
+    def military_districts(self):
+        self.md_table = QTableWidget()
+        self.column_name = TableData.getColumnValues()['District']
+        self.md_table.setColumnCount(len(self.column_name))
+        self.md_table.setHorizontalHeaderLabels(sorted(self.column_name))
+        self.md_table.resizeColumnsToContents()
+        self.md_table.verticalHeader().setVisible(False)
+        # Подключение к базе данных
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Выполнение запроса
+        cursor.execute('''
+            SELECT District, COUNT(*) AS stud_num
+            FROM students
+            GROUP BY District 
+        ''')
+
+        # Получение результатов
+        results = cursor.fetchall()
+        # Закрытие соединения с базой данных
+        conn.close()
+        
+        tmp = sorted(self.column_name)
+        
+        self.md_table.insertRow(0)
+        for name, numb in results:
+            self.md_table.setItem(0, tmp.index(name), QTableWidgetItem(str(numb)))
 
 
 class StatsWidget(QTableWidget):
