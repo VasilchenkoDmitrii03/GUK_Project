@@ -421,17 +421,15 @@ class StatisticWindow(QMainWindow):
         self.setWindowTitle("Статистика")
         split = QSplitter(Qt.Vertical)        
 
-        md_area = StatsWidget()
+        md_area = QWidget()
         gen_area = StatsWidget()
-        ma_area = StatsWidget()
+        ma_area = QWidget()
 
         split.addWidget(md_area)
         split.addWidget(gen_area)
         split.addWidget(ma_area)
         
-        self.setCentralWidget(split)
-
-        self.show()
+        self.setCentralWidget(split)        
 
 
 class StatsWidget(QTableWidget):
@@ -443,23 +441,33 @@ class StatsWidget(QTableWidget):
         self.verticalHeader().setVisible(False)
         self.horizontalHeader().setVisible(False)
 
+        connection = sqlite3.connect(DATABASE_PATH)
+        cursor = connection.cursor()
+
         self.setItem(0, 0, QTableWidgetItem('Кандидатов подало заявлений'))
-        self.setItem(0, 1, QTableWidgetItem('1000'))
+        students_count = cursor.execute("SELECT COUNT(PersonalNumber) FROM Students").fetchone()
+        self.setItem(0, 1, QTableWidgetItem(f'{students_count[0]}'))
         
-        self.setItem(1, 0, QTableWidgetItem('Кандидатов отобрано в ВК'))
-        self.setItem(1, 1, QTableWidgetItem('800'))
+        self.setItem(1, 0, QTableWidgetItem('Мужчин/Женщин'))
+        male_count = cursor.execute("SELECT COUNT(*) FROM Students WHERE Sex = 'M'").fetchone()
+        female_count = cursor.execute("SELECT COUNT(*) FROM Students WHERE Sex = 'Ж'").fetchone()
+        self.setItem(1, 1, QTableWidgetItem(f'{male_count[0]}/{female_count[0]}'))
         
-        self.setItem(2, 0, QTableWidgetItem('Направлено дел кандидатов в ВВУЗ из ВК'))
-        self.setItem(2, 1, QTableWidgetItem('600'))
+        self.setItem(2, 0, QTableWidgetItem('Зачислен/Отчислен'))
+        join_count = cursor.execute("SELECT COUNT(*) FROM Students WHERE Status = 'зачислен'").fetchone()
+        left_count = cursor.execute("SELECT COUNT(*) FROM Students WHERE Status = 'отчислен'").fetchone()
+        self.setItem(2, 1, QTableWidgetItem(f'{join_count[0]}/{left_count[0]}'))
+
+        self.setItem(3, 0, QTableWidgetItem('Человек в отдельной квоте'))
+        qouta_count = cursor.execute("SELECT COUNT(*) FROM Students WHERE SeparateQuota = 'да'").fetchone()
+        self.setItem(3, 1, QTableWidgetItem(f'{qouta_count[0]}')) 
  
-        self.setItem(3, 0, QTableWidgetItem('Поступило дел кандидатов в ВВУЗ из ВК'))
-        self.setItem(3, 1, QTableWidgetItem('600'))
+        self.setItem(4, 0, QTableWidgetItem('Выпускников СВУ, ПКУ, КК минобороны'))
+        graduated_count = cursor.execute("SELECT COUNT(*) FROM Students WHERE Graduated = 'да'").fetchone()
+        self.setItem(4, 1, QTableWidgetItem(f'{graduated_count[0]}'))
 
-        self.setItem(4, 0, QTableWidgetItem('Направлено вызовов из ВВУЗов'))
-        self.setItem(4, 1, QTableWidgetItem('600'))
-
-        self.setItem(5, 0, QTableWidgetItem('Направлено отказов из ВВУЗов'))
-        self.setItem(5, 1, QTableWidgetItem('600'))
+        connection.commit()
+        connection.close()
 
         self.resizeColumnsToContents()
 
