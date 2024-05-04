@@ -6,9 +6,9 @@ sys.path.append(parent_directory)
 
 import sqlite3
 
-from PyQt5.QtCore import QSize, QDate
+from PyQt5.QtCore import QSize, QDate, Qt
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-from PyQt5.QtWidgets import QSplitter, QTextEdit, QSplitter, QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
+from PyQt5.QtWidgets import QSplitter, QLCDNumber, QTextEdit, QSplitter, QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, QMessageBox, \
     QAction, QToolBar, QCheckBox, QStatusBar, QCalendarWidget
 from PyQt5.QtGui import QColor, QIcon
@@ -415,23 +415,64 @@ class MainWindow(QMainWindow):
                 item.setBackground(color)
 
 
-class StatisticWindow(QWidget):
+class StatisticWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Статистика")
-        split = QSplitter()
-        layout = QVBoxLayout()
+        split = QSplitter(Qt.Vertical)        
 
-        md_area = QWidget()
-        gen_area = QWidget()
-        ma_area = QWidget()
+        md_area = StatsWidget()
+        gen_area = StatsWidget()
+        ma_area = StatsWidget()
 
         split.addWidget(md_area)
         split.addWidget(gen_area)
         split.addWidget(ma_area)
+        
+        self.setCentralWidget(split)
 
-        layout.addWidget(split)
-        self.setLayout(layout)
+        self.show()
+
+
+class StatsWidget(QTableWidget):
+    def __init__(self):
+        super().__init__()
+        self.setColumnCount(2)        
+        self.setRowCount(6)
+
+        self.verticalHeader().setVisible(False)
+        self.horizontalHeader().setVisible(False)
+        
+        self.setItem(0, 0, QTableWidgetItem('Кандидатов подало заявлений'))
+        self.setItem(0, 1, QTableWidgetItem('1000'))
+        
+        self.setItem(1, 0, QTableWidgetItem('Кандидатов отобрано в ВК'))
+        self.setItem(1, 1, QTableWidgetItem('800'))
+        
+        self.setItem(2, 0, QTableWidgetItem('Направлено дел кандидатов в ВВУЗ из ВК'))
+        self.setItem(2, 1, QTableWidgetItem('600'))
+
+        self.setItem(3, 0, QTableWidgetItem('Поступило дел кандидатов в ВВУЗ из ВК'))
+        self.setItem(3, 1, QTableWidgetItem('600'))
+
+        self.setItem(4, 0, QTableWidgetItem('Направлено вызовов из ВВУЗов'))
+        self.setItem(4, 1, QTableWidgetItem('600'))
+
+        self.setItem(5, 0, QTableWidgetItem('Направлено отказов из ВВУЗов'))
+        self.setItem(5, 1, QTableWidgetItem('600'))
+
+        self.resizeColumnsToContents()
+        
+
+class StatsApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        
+        self.stats_widget = StatsWidget()
+        self.setCentralWidget(self.stats_widget)
+        
+        self.setWindowTitle('Статистика количества поступивших вузы по городам')
+        self.show()
 
 
 if __name__ == '__main__':
