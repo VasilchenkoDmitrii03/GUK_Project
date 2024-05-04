@@ -89,7 +89,6 @@ class EditRowDialog(QDialog):
         #return [input.currentText() if isinstance(input, QComboBox) else input.text() for input in self.line_edits]
 
 
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -108,6 +107,7 @@ class MainWindow(QMainWindow):
         self.table.setSelectionMode(QTableWidget.ExtendedSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.horizontalHeader().setStretchLastSection(True)
+
     def design_set(self):
         self.setWindowTitle('Главное окно')
 
@@ -121,6 +121,8 @@ class MainWindow(QMainWindow):
         self.export_button = QPushButton('Экспорт в CSV')
         self.export_button.clicked.connect(self.clever_export)
 
+        self.statistic_button = QPushButton('Статистика')
+        self.statistic_button.clicked.connect(self.create_statistic)
         self.import_button = QPushButton('Импорт из CSV')
         self.import_button.clicked.connect(self.import_csv)
         self.FilterButton = QPushButton('Применить фильтры')
@@ -134,17 +136,19 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.SurnameTextBox)
         layout.addWidget(self.FilterButton)
         layout.addWidget(self.table)
+        layout.addWidget(self.statistic_button)
         layout.addWidget(self.add_row_button)
         layout.addWidget(self.export_button)
         layout.addWidget(self.import_button)
 
         self.setCentralWidget(central_widget)
+
     def create_filter_widget(self):
         self.checkable_combobox_list = MyQTWidgets.CheckableComboBoxesList.MyWidget(self)
         self.checkable_combobox_list.setGeometry(200, 150, 150, 30)
         self.checkable_combobox_list.createComboBoxes(StaticResources.TableData.getColumnValues())
-    def create_menu(self):
 
+    def create_menu(self):
         menu = self.menuBar()
         file_menu = menu.addMenu("&ФАЙЛ")
         button_action_1 = QAction( "&Зарузить данные из ВК", self)
@@ -155,7 +159,6 @@ class MainWindow(QMainWindow):
         button_action_3 = QAction("&Выгрузить данные в ВК", self)
         button_action_3.triggered.connect(self.clever_export)
         file_menu.addAction(button_action_3)
-
 
     #Table
     def update_table_view(self):
@@ -180,6 +183,7 @@ class MainWindow(QMainWindow):
         connection = sqlite3.connect(DATABASE_PATH)
         connection.close()
         self.create_table()
+
     def create_table(self):
         connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
@@ -213,6 +217,7 @@ class MainWindow(QMainWindow):
         ADD5)''')
         connection.commit()
         connection.close()
+
     def sql_request_organizer(self):
         connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
@@ -237,6 +242,7 @@ class MainWindow(QMainWindow):
         connection.commit()
         connection.close()
         return records
+
     def sql_request(self, cursor, columnName, valuesList):
         values = ''
         for l in valuesList:
@@ -247,10 +253,12 @@ class MainWindow(QMainWindow):
         values = values[0:len(values)-1]
         res = f'{columnName} IN ({values})'
         return res
+    
     def sql_request_surname(self):
         if self.SurnameTextBox.text() == "":
             return ""
         return f"instr(Surname, \"{self.SurnameTextBox.text()}\") > 0"
+    
     def add_record(self, list:list):
         if not(self.check_record_uniqness(list)):
             return
@@ -352,6 +360,10 @@ class MainWindow(QMainWindow):
             values.insert(selected_item.column(), selected_item.text())
         return values
 
+    def create_statistic(self):
+        self.statistic_window = StatisticWindow()
+        self.statistic_window.setGeometry(200, 300, 1500, 750)
+        self.statistic_window.show()
 
     def export_csv(self):
         self.update_table_filter_view()
@@ -401,6 +413,15 @@ class MainWindow(QMainWindow):
             item = self.table.item(row, column)
             if item is not None:
                 item.setBackground(color)
+
+
+class StatisticWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout()
+        self.label = QLabel("Another Window")
+        layout.addWidget(self.label)
+        self.setLayout(layout)
 
 
 if __name__ == '__main__':
