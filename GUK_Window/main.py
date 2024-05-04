@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QSplitter, QTextEdit, QSplitter, QApplication, QMain
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, QMessageBox, \
     QAction, QToolBar, QCheckBox, QStatusBar, QCalendarWidget
 from PyQt5.QtGui import QColor, QIcon
+from PyQt5.QtCore import Qt
 
 import MyQTWidgets.checkableComboBox
 import MyQTWidgets.CheckableComboBoxesList
@@ -96,6 +97,11 @@ class MainWindow(QMainWindow):
         self.db()
         self.update_table_view()
 
+    def keyPressEvent(self, event):
+        if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_D:
+            self.close()
+        else:
+            super().keyPressEvent(event)
     #FORM DESIGN
     def table_settings(self):
         self.table = QTableWidget()
@@ -415,24 +421,64 @@ class MainWindow(QMainWindow):
                 item.setBackground(color)
 
 
-class StatisticWindow(QWidget):
+class TwoRowsWidget(QWidget):
+    def __init__(self, line1, line2):
+        super().__init__()
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        label1 = QLabel(line1)
+        label2 = QLabel(line2)
+        self.layout.addWidget(label1)
+        self.layout.addWidget(label2)
+
+class StatisticWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Статистика")
-        split = QSplitter()
+        self.setCentralWidget(TableWithStudentsInUnis())
+        self.show()
+
+
+class TableWithStudentsInUnis(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.initUI()
+
+    def initUI(self):
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT University, COUNT(*) AS количество_студентов
+            FROM Students
+            GROUP BY University
+        ''')
+        results = cursor.fetchall()
+        for row in results:
+            print(row[0], row[1])
+        conn.close()
+
+        columns = 4
+        rows = len(results) % columns + 1 if len(results) % columns else 0
         layout = QVBoxLayout()
 
-        md_area = QWidget()
-        gen_area = QWidget()
-        ma_area = QWidget()
+        tableWidget = QTableWidget()
+        tableWidget.setRowCount(rows)
+        tableWidget.setColumnCount(columns)  # Только один столбец для QLabel
 
-        split.addWidget(md_area)
-        split.addWidget(gen_area)
-        split.addWidget(ma_area)
+        # Устанавливаем минимальный и максимальный размеры для ячеек
+        tableWidget.horizontalHeader().setDefaultSectionSize(300)
+        tableWidget.verticalHeader().setDefaultSectionSize(150)
+        tableWidget.verticalHeader().setVisible(False)
+        tableWidget.horizontalHeader().setVisible(False)
 
-        layout.addWidget(split)
+        # Добавляем текстовые метки в ячейки
+        for i, text in enumerate(results):
+            tableWidget.setCellWidget(i // columns, i % columns, TwoRowsWidget(str(text[1]) + ' чел.', str(text[0])))
+
+        layout.addWidget(tableWidget)
         self.setLayout(layout)
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
