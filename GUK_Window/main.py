@@ -418,6 +418,7 @@ class MainWindow(QMainWindow):
 class StatisticWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Статистика")
         split = QSplitter()
         layout = QVBoxLayout()
 
