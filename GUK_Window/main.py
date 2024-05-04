@@ -444,7 +444,6 @@ class StatsWidget(QTableWidget):
         self.horizontalHeader().setVisible(False)
 
         self.setItem(0, 0, QTableWidgetItem('Кандидатов подало заявлений'))
-        candidates = 
         self.setItem(0, 1, QTableWidgetItem('1000'))
         
         self.setItem(1, 0, QTableWidgetItem('Кандидатов отобрано в ВК'))
@@ -462,7 +461,7 @@ class StatsWidget(QTableWidget):
         self.setItem(5, 0, QTableWidgetItem('Направлено отказов из ВВУЗов'))
         self.setItem(5, 1, QTableWidgetItem('600'))
 
-        self.resizeColumnsToContents()        
+        self.resizeColumnsToContents()
 
 
 if __name__ == '__main__':
