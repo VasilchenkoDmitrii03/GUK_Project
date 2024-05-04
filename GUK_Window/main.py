@@ -6,7 +6,7 @@ sys.path.append(parent_directory)
 
 import sqlite3
 
-from PyQt5.QtCore import QSize, QDate
+from PyQt5.QtCore import QSize, QDate, Qt
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from PyQt5.QtWidgets import QSplitter, QTextEdit, QSplitter, QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, QMessageBox, \
@@ -415,14 +415,16 @@ class MainWindow(QMainWindow):
                 item.setBackground(color)
 
 
-class StatisticWindow(QWidget):
+class StatisticWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Статистика")
-        split = QSplitter()
-        layout = QVBoxLayout()
+        split = QSplitter(Qt.Vertical)
+        # layout = QVBoxLayout()
 
-        md_area = QWidget()
+        self.military_districts()
+
+        md_area = self.md_table
         gen_area = QWidget()
         ma_area = QWidget()
 
@@ -430,9 +432,39 @@ class StatisticWindow(QWidget):
         split.addWidget(gen_area)
         split.addWidget(ma_area)
 
-        layout.addWidget(split)
-        self.setLayout(layout)
+        self.setCentralWidget(split)
+        # layout.addWidget(split)
+        # self.setLayout(layout)
+        self.show()
 
+    def military_districts(self):
+        self.md_table = QTableWidget()
+        self.column_name = TableData.getColumnValues()['District']
+        self.md_table.setColumnCount(len(self.column_name))
+        self.md_table.setHorizontalHeaderLabels(sorted(self.column_name))
+        self.md_table.resizeColumnsToContents()
+        self.md_table.verticalHeader().setVisible(False)
+        # Подключение к базе данных
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Выполнение запроса
+        cursor.execute('''
+            SELECT District, COUNT(*) AS stud_num
+            FROM students
+            GROUP BY District 
+        ''')
+
+        # Получение результатов
+        results = cursor.fetchall()
+        # Закрытие соединения с базой данных
+        conn.close()
+        
+        tmp = sorted(self.column_name)
+        
+        self.md_table.insertRow(0)
+        for name, numb in results:
+            self.md_table.setItem(0, tmp.index(name), QTableWidgetItem(str(numb)))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
