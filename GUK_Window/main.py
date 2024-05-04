@@ -6,9 +6,9 @@ sys.path.append(parent_directory)
 
 import sqlite3
 
-from PyQt5.QtCore import QSize, QDate
+from PyQt5.QtCore import QSize, QDate, Qt
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-from PyQt5.QtWidgets import QSplitter, QTextEdit, QSplitter, QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
+from PyQt5.QtWidgets import QSplitter, QLCDNumber, QTextEdit, QSplitter, QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, QMessageBox, \
     QAction, QToolBar, QCheckBox, QStatusBar, QCalendarWidget
 from PyQt5.QtGui import QColor, QIcon
@@ -432,13 +432,6 @@ class TwoRowsWidget(QWidget):
         self.layout.addWidget(label1)
         self.layout.addWidget(label2)
 
-class StatisticWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Статистика")
-        self.setCentralWidget(TableWithStudentsInUnis())
-        self.show()
-
 
 class TableWithStudentsInUnis(QWidget):
     def __init__(self):
@@ -458,27 +451,121 @@ class TableWithStudentsInUnis(QWidget):
         for row in results:
             print(row[0], row[1])
         conn.close()
+        print(results)
 
         columns = 4
-        rows = len(results) % columns + 1 if len(results) % columns else 0
+        rows = len(results) // columns + 1 if len(results) % columns else 0
         layout = QVBoxLayout()
 
-        tableWidget = QTableWidget()
-        tableWidget.setRowCount(rows)
-        tableWidget.setColumnCount(columns)  # Только один столбец для QLabel
+        self.tableWidget = QTableWidget()
+        self.tableWidget.setRowCount(rows)
+        self.tableWidget.setColumnCount(columns)  # Только один столбец для QLabel
+        print(rows, columns)
 
         # Устанавливаем минимальный и максимальный размеры для ячеек
-        tableWidget.horizontalHeader().setDefaultSectionSize(300)
-        tableWidget.verticalHeader().setDefaultSectionSize(150)
-        tableWidget.verticalHeader().setVisible(False)
-        tableWidget.horizontalHeader().setVisible(False)
+        self.tableWidget.horizontalHeader().setDefaultSectionSize(300)
+        self.tableWidget.verticalHeader().setDefaultSectionSize(150)
+        self.tableWidget.verticalHeader().setVisible(False)
+        self.tableWidget.horizontalHeader().setVisible(False)
 
         # Добавляем текстовые метки в ячейки
         for i, text in enumerate(results):
-            tableWidget.setCellWidget(i // columns, i % columns, TwoRowsWidget(str(text[1]) + ' чел.', str(text[0])))
+            print(i)
+            self.tableWidget.setCellWidget(i // columns, i % columns, TwoRowsWidget(str(text[1]) + ' чел.', str(text[0])))
 
-        layout.addWidget(tableWidget)
+        layout.addWidget(self.tableWidget)
         self.setLayout(layout)
+
+class StatisticWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Статистика")
+        split_vertical = QSplitter()
+        split_horizontal = QSplitter(Qt.Vertical)      
+        split_horizontal.setSizes([200, 400])
+
+        self.military_districts()
+        tmp1 = TableWithStudentsInUnis()
+        gen_area = StatsWidget()
+        md_area = self.md_table
+        ma_area = tmp1.tableWidget
+
+        split_horizontal.addWidget(md_area)
+        split_horizontal.addWidget(gen_area)
+        split_vertical.addWidget(split_horizontal)
+        split_vertical.addWidget(ma_area)
+        
+        self.setCentralWidget(split_vertical)        
+        self.show()
+
+    def military_districts(self):
+        self.md_table = QTableWidget()
+        self.column_name = TableData.getColumnValues()['District']
+        self.md_table.setColumnCount(len(self.column_name))
+        self.md_table.setHorizontalHeaderLabels(sorted(self.column_name))
+        self.md_table.resizeColumnsToContents()
+        self.md_table.verticalHeader().setVisible(False)
+        # Подключение к базе данных
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Выполнение запроса
+        cursor.execute('''
+            SELECT District, COUNT(*) AS stud_num
+            FROM students
+            GROUP BY District 
+        ''')
+
+        # Получение результатов
+        results = cursor.fetchall()
+        # Закрытие соединения с базой данных
+        conn.close()
+        
+        tmp = sorted(self.column_name)
+        
+        self.md_table.insertRow(0)
+        for name, numb in results:
+            self.md_table.setItem(0, tmp.index(name), QTableWidgetItem(str(numb)))
+
+
+class StatsWidget(QTableWidget):
+    def __init__(self):
+        super().__init__()
+        self.setColumnCount(2)        
+        self.setRowCount(6)
+
+        self.verticalHeader().setVisible(False)
+        self.horizontalHeader().setVisible(False)
+
+        connection = sqlite3.connect(DATABASE_PATH)
+        cursor = connection.cursor()
+
+        self.setItem(0, 0, QTableWidgetItem('Кандидатов подало заявлений'))
+        students_count = cursor.execute("SELECT COUNT(PersonalNumber) FROM Students").fetchone()
+        self.setItem(0, 1, QTableWidgetItem(f'{students_count[0]}'))
+        
+        self.setItem(1, 0, QTableWidgetItem('Мужчин/Женщин'))
+        male_count = cursor.execute("SELECT COUNT(*) FROM Students WHERE Sex = 'M'").fetchone()
+        female_count = cursor.execute("SELECT COUNT(*) FROM Students WHERE Sex = 'Ж'").fetchone()
+        self.setItem(1, 1, QTableWidgetItem(f'{male_count[0]}/{female_count[0]}'))
+        
+        self.setItem(2, 0, QTableWidgetItem('Зачислен/Отчислен'))
+        join_count = cursor.execute("SELECT COUNT(*) FROM Students WHERE Status = 'зачислен'").fetchone()
+        left_count = cursor.execute("SELECT COUNT(*) FROM Students WHERE Status = 'отчислен'").fetchone()
+        self.setItem(2, 1, QTableWidgetItem(f'{join_count[0]}/{left_count[0]}'))
+
+        self.setItem(3, 0, QTableWidgetItem('Человек в отдельной квоте'))
+        qouta_count = cursor.execute("SELECT COUNT(*) FROM Students WHERE SeparateQuota = 'да'").fetchone()
+        self.setItem(3, 1, QTableWidgetItem(f'{qouta_count[0]}')) 
+ 
+        self.setItem(4, 0, QTableWidgetItem('Выпускников СВУ, ПКУ, КК минобороны'))
+        graduated_count = cursor.execute("SELECT COUNT(*) FROM Students WHERE Graduated = 'да'").fetchone()
+        self.setItem(4, 1, QTableWidgetItem(f'{graduated_count[0]}'))
+
+        connection.commit()
+        connection.close()
+
+        self.resizeColumnsToContents()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -96,7 +96,7 @@ def getColumnValues():
     dictionary['Status'] = ['зачислен', 'отчислен']
     dictionary['SeparateQuota'] = ['да', 'нет']
     dictionary['Graduated'] = ['да','нет']
-    dictionary['District'] = ['Центральный', 'Северо-Западный', 'Южный', 'Северо-Кавказский', 'Приволжский', 'Уральский', 'Сибириский', 'Дальневосточный']
+    dictionary['District'] = ['Центральный', 'Московский', 'Ленинградский', 'Южный', 'Восточный']
 
     return dictionary
 def getRussianColumnNames() :
