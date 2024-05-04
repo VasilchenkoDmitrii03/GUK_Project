@@ -1,10 +1,16 @@
 import sys
+import os
+
+parent_directory = os.path.abspath('..')
+sys.path.append(parent_directory)
+
 import sqlite3
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, \
     QCalendarWidget, QMessageBox, QCheckBox
 from PyQt5.QtGui import QColor
 from StaticResources import TableData
+
 class Regisration(QDialog):
     def __init__(self):
         super().__init__()

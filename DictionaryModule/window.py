@@ -1,5 +1,9 @@
 import sqlite3
 import sys
+import os
+
+parent_directory = os.path.abspath('..')
+sys.path.append(parent_directory)
 
 from PyQt5.QtWidgets import QFileDialog, QMainWindow, QLineEdit, QGridLayout, QLabel, QApplication, QWidget, \
     QPushButton, QDialog, QMessageBox, QComboBox, QAction, QTableWidget, QTableWidgetItem

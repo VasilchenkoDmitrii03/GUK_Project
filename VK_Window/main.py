@@ -22,12 +22,14 @@ from PyQt5.uic.properties import QtWidgets
 
 from StaticResources import TableData
 
+DATABASE_PATH = "VK_MAIN_DB.db"
 
-class EditRowDialog(QDialog):
-    def __init__(self, student):
+
+class AddRowDialog(QDialog):
+    def __init__(self):
         super().__init__(None)
 
-        self.setWindowTitle('Изменение строки')
+        self.setWindowTitle('Добавление строки')
         self.column_names = StaticResources.TableData.getShortTableRows()
 
         layout = QGridLayout()
@@ -35,7 +37,7 @@ class EditRowDialog(QDialog):
         self.labels = []
         self.line_edits = []
 
-        print('Building columns')
+        print(self.column_names)
         for i in range(1, len(self.column_names)):
             cur_name = self.column_names[i]
             label = QLabel(cur_name, self)
@@ -44,15 +46,14 @@ class EditRowDialog(QDialog):
                 combo_box = QComboBox(self)
                 lst = TableData.getColumnValues()[TableData.getRussianColumnNames()[cur_name]]
                 combo_box.addItems(lst)
-                combo_box.setCurrentText(student[i-1])
+                combo_box.setCurrentText("")
                 self.labels.append(label)
                 self.line_edits.append(combo_box)
                 layout.addWidget(label, i, 0)
                 layout.addWidget(combo_box, i, 1)
             elif cur_name == 'Число, год рождения':
                 calendar = QCalendarWidget(self)
-                strs = student[i-1].split('-')
-                date = QDate(int(strs[2]), int(strs[1]), int(strs[0]))
+                date = QDate.currentDate()
 
                 calendar.setSelectedDate(date)
                 self.labels.append(label)
@@ -61,7 +62,7 @@ class EditRowDialog(QDialog):
                 layout.addWidget(calendar, i, 1)
             else:
                 line_edit = QLineEdit(self)
-                line_edit.setText(student[i-1])
+                line_edit.setText("")
                 self.labels.append(label)
                 self.line_edits.append(line_edit)
                 layout.addWidget(label, i, 0)
@@ -84,8 +85,6 @@ class EditRowDialog(QDialog):
             else:
                 lst.append(inp.text())
         return lst
-        #return [input.currentText() if isinstance(input, QComboBox) else input.text() for input in self.line_edits]
-
 
 
 class MainWindow(QMainWindow):
@@ -113,8 +112,8 @@ class MainWindow(QMainWindow):
         self.create_menu()
         self.table_settings()
 
-        self.add_row_button = QPushButton('Редактировать строку')
-        self.add_row_button.clicked.connect(self.edit_row)
+        self.add_row_button = QPushButton('Добавить строку')
+        self.add_row_button.clicked.connect(self.add_row)
         self.table.selectedItems()
 
         self.export_button = QPushButton('Экспорт в CSV')
@@ -142,8 +141,8 @@ class MainWindow(QMainWindow):
         self.checkable_combobox_list = MyQTWidgets.CheckableComboBoxesList.MyWidget(self)
         self.checkable_combobox_list.setGeometry(200, 150, 150, 30)
         self.checkable_combobox_list.createComboBoxes(StaticResources.TableData.getColumnValues())
-
     def create_menu(self):
+
         menu = self.menuBar()
         file_menu = menu.addMenu("&ФАЙЛ")
         button_action_1 = QAction( "&Зарузить данные из ВК", self)
@@ -176,16 +175,16 @@ class MainWindow(QMainWindow):
 
     #DataBase
     def db(self):
-        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        connection = sqlite3.connect(DATABASE_PATH)
         connection.close()
         self.create_table()
         
     def create_table(self):
-        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS Students (
-        ID  PRIMARY KEY,
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
         PersonalNumber INTEGER,
         Rang TEXT,
         Sex TEXT NOT NULL,
@@ -213,9 +212,9 @@ class MainWindow(QMainWindow):
         ADD5)''')
         connection.commit()
         connection.close()
-
+        
     def sql_request_organizer(self):
-        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
         self.checkable_combobox_list.getChosenValues()
         keys = self.checkable_combobox_list.TotalDict.keys()
@@ -259,27 +258,27 @@ class MainWindow(QMainWindow):
         if not(self.check_record_uniqness(list)):
             return
         try:
-            connection = sqlite3.connect('GUK_MAIN_DB.db')
+            connection = sqlite3.connect(DATABASE_PATH)
             cursor = connection.cursor()
-
-            for i in range(len(list)):
-                if i != 1:
-                    list[i] = "'" + list[i] + "'"
+            list[0] = str(list[0])
             # Добавляем нового пользователя
             params = ''
             for s in list:
+                print(s)
                 params += s + ','
             params = params[0:len(params) - 1]
-            columns = 'ID, PersonalNumber, Rang, Sex, Surname, Name, FatherName, Birthday, Contacts, Status, SeparateQuota, Graduated, District, Subject, VK, University, RegistrationDate,SelectionCriteria, ReferalDate, DocumentNumber, Note, ADD1, ADD2, ADD3, ADD4, ADD5'
+            print(params)
+            columns = 'PersonalNumber, Rang, Sex, Surname, Name, FatherName, Birthday, Contacts, Status, SeparateQuota, Graduated, District, Subject, VK, University, RegistrationDate,SelectionCriteria, ReferalDate, DocumentNumber, Note, ADD1, ADD2, ADD3, ADD4, ADD5'
             cursor.execute(f'INSERT INTO Students ({columns}) VALUES ({params})')
             # Сохраняем изменения и закрываем соединение
             connection.commit()
             connection.close()
         except:
             print("Error occured")
+
     def check_record_uniqness(self, record:list) -> bool: # if record is unique returns true
         id = str(record[0])
-        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
         cursor.execute(f"SELECT * FROM  Students WHERE ID = {id}")
         tmp = len(cursor.fetchall())
@@ -289,40 +288,13 @@ class MainWindow(QMainWindow):
             return True
         else:
             return False
-        #id = str(record[0])
-        #try:
-        #    connection = sqlite3.connect('GUK_MAIN_DB.db')
-        #    cursor = connection.cursor()
-        #    cursor.execute(f"SELECT * FROM  Students WHERE ID = {id}")
-        #    connection.commit()
-        #    connection.close()
-        #    tmp = len(cursor.fetchall())
-        #    return tmp == 0
-        #except:
-        #    print("Error occured")
-        #    return False
-
-    def edit_db_row(self, record:list):
-        connection = sqlite3.connect('GUK_MAIN_DB.db')
-        cursor = connection.cursor()
-        columns = StaticResources.TableData.getDBColumnsList()
-        columnsStr = ','.join(columns)
-        newValues = ','.join(record)
-        cursor.execute(f"REPLACE INTO Students ({columnsStr}) VALUES ({newValues});")
-        connection.commit()
-        connection.close()
 
     # FUNCTIONS
 
-    def edit_row(self):
+    def add_row(self):
         #...
         try:
-            student = self.get_selected_row()
-            if len(student) == 0:
-                return
-            id = student[0]
-            student = student[1:]
-            dialog = EditRowDialog(student)
+            dialog = AddRowDialog()
             if dialog.exec_():
                 data = dialog.get_data()
                 data.insert(0, str(id))# edited row
@@ -331,7 +303,8 @@ class MainWindow(QMainWindow):
                 for i in range(0, len(data)):
                     if i != 1:
                         data[i] = "'" + data[i] + "'"
-                self.edit_db_row(data)
+                print(data[1:len(data)])
+                self.add_record(data[1:len(data)])
                 self.update_table_view()
                 #row_position = self.SELECTED_INDEX # ищем строку с нужным номером
                 #for i, item in enumerate(data):
@@ -340,21 +313,6 @@ class MainWindow(QMainWindow):
                 #self.set_column_color(2, QColor('blue'))
         except:
             print("error occured")
-    def get_selected_row(self):
-        values = []
-        if len(self.table.selectedItems()) == 0:
-            msg_box = QMessageBox()
-            msg_box.setIcon(QMessageBox.Information)
-            msg_box.setText('Ни одна строка не выделена')
-            msg_box.setStandardButtons(QMessageBox.Ok)
-            retval = msg_box.exec_()
-
-            return values
-        self.SELECTED_INDEX = int(self.table.selectedItems()[0].row())
-        for selected_item in self.table.selectedItems():
-            # create [item from col 0, item from col 1]
-            values.insert(selected_item.column(), selected_item.text())
-        return values
 
 
     def export_csv(self):
@@ -377,7 +335,7 @@ class MainWindow(QMainWindow):
 
 
     def get_rows(self, columns:list) -> list:
-        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
         str_columns = ''
         for col in columns:
@@ -389,6 +347,7 @@ class MainWindow(QMainWindow):
         connection.commit()
         connection.close()
         return records
+
     def import_csv(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Выберите файл CSV", "", "CSV Files (*.csv)")
         if file_path:
