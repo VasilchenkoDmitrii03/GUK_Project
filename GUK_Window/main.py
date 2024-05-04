@@ -442,8 +442,9 @@ class StatsWidget(QTableWidget):
 
         self.verticalHeader().setVisible(False)
         self.horizontalHeader().setVisible(False)
-        
+
         self.setItem(0, 0, QTableWidgetItem('Кандидатов подало заявлений'))
+        candidates = 
         self.setItem(0, 1, QTableWidgetItem('1000'))
         
         self.setItem(1, 0, QTableWidgetItem('Кандидатов отобрано в ВК'))
@@ -451,7 +452,7 @@ class StatsWidget(QTableWidget):
         
         self.setItem(2, 0, QTableWidgetItem('Направлено дел кандидатов в ВВУЗ из ВК'))
         self.setItem(2, 1, QTableWidgetItem('600'))
-
+ 
         self.setItem(3, 0, QTableWidgetItem('Поступило дел кандидатов в ВВУЗ из ВК'))
         self.setItem(3, 1, QTableWidgetItem('600'))
 
@@ -461,18 +462,7 @@ class StatsWidget(QTableWidget):
         self.setItem(5, 0, QTableWidgetItem('Направлено отказов из ВВУЗов'))
         self.setItem(5, 1, QTableWidgetItem('600'))
 
-        self.resizeColumnsToContents()
-        
-
-class StatsApp(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        
-        self.stats_widget = StatsWidget()
-        self.setCentralWidget(self.stats_widget)
-        
-        self.setWindowTitle('Статистика количества поступивших вузы по городам')
-        self.show()
+        self.resizeColumnsToContents()        
 
 
 if __name__ == '__main__':
